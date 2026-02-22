@@ -506,12 +506,13 @@ struct GameResultView: View {
         )
 
         // 상세 기록 저장
+        let difficulty = AIDifficulty(rawValue: UserSettings.shared.aiDifficulty) ?? .intermediate
         let record = GameRecord(
             won: won,
             score: state.finalScore,
             goCount: player.goCount,
             multipliers: state.scoreMultipliers,
-            aiDifficulty: AIDifficulty(rawValue: UserSettings.shared.aiDifficulty) ?? .intermediate,
+            aiDifficulty: difficulty,
             brightCount: player.capturedBrights.count,
             animalCount: player.capturedAnimals.count,
             ribbonCount: player.capturedRibbons.count,
@@ -520,6 +521,16 @@ struct GameResultView: View {
             roundsPlayed: state.roundNumber
         )
         GameRecordStore.shared.addRecord(record)
+
+        // Game Center 리포트
+        GameCenterManager.shared.processGameResult(
+            won: won,
+            score: state.finalScore,
+            goCount: player.goCount,
+            hadGodori: player.hasGodori,
+            brightCount: player.capturedBrights.count,
+            difficulty: difficulty
+        )
     }
 }
 

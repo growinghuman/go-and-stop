@@ -26,9 +26,9 @@ class CardNode: SKSpriteNode {
         self.card = card
         self.isFaceUp = faceUp
 
-        // 고급 렌더러 사용
-        self.frontTexture = CardRenderer.texture(for: card)
-        self.backTexture = CardRenderer.backTexture()
+        // 텍스쳐 캐시 사용 (성능 최적화)
+        self.frontTexture = TextureCache.shared.cardTexture(for: card)
+        self.backTexture = TextureCache.shared.cardBackTexture()
 
         let texture = faceUp ? frontTexture : backTexture
         super.init(texture: texture, color: .clear, size: CardNode.cardSize)

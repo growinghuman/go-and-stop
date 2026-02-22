@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage("minimumScore") private var minimumScore = 7
     @AppStorage("tableTheme") private var tableTheme = "green"
 
+    @State private var showPrivacyPolicy = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -92,6 +93,31 @@ struct SettingsView: View {
                     Text("테마")
                 }
 
+                // Game Center
+                Section {
+                    Button(action: {
+                        GameCenterManager.shared.showLeaderboard()
+                    }) {
+                        Label("리더보드", systemImage: "trophy.fill")
+                    }
+                    .disabled(!GameCenterManager.shared.isAuthenticated)
+
+                    Button(action: {
+                        GameCenterManager.shared.showAchievements()
+                    }) {
+                        Label("업적", systemImage: "star.fill")
+                    }
+                    .disabled(!GameCenterManager.shared.isAuthenticated)
+
+                    if !GameCenterManager.shared.isAuthenticated {
+                        Text("Game Center에 로그인하세요")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                } header: {
+                    Text("Game Center")
+                }
+
                 // 정보
                 Section {
                     HStack {
@@ -99,6 +125,10 @@ struct SettingsView: View {
                         Spacer()
                         Text(AppConstants.version)
                             .foregroundColor(.secondary)
+                    }
+
+                    Button(action: { showPrivacyPolicy = true }) {
+                        Label("개인정보 처리방침", systemImage: "hand.raised.fill")
                     }
                 } header: {
                     Text("정보")
@@ -110,6 +140,9 @@ struct SettingsView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("완료") { dismiss() }
                 }
+            }
+            .sheet(isPresented: $showPrivacyPolicy) {
+                PrivacyPolicyView()
             }
         }
     }

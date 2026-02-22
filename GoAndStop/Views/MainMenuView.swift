@@ -154,6 +154,41 @@ struct MainMenuView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 14))
                             }
                         }
+
+                        // Game Center 버튼
+                        if GameCenterManager.shared.isAuthenticated {
+                            HStack(spacing: 10) {
+                                Button(action: {
+                                    GameCenterManager.shared.showLeaderboard()
+                                }) {
+                                    HStack {
+                                        Image(systemName: "trophy.fill")
+                                        Text("순위")
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(.yellow.opacity(0.8))
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 38)
+                                    .background(Color.yellow.opacity(0.1))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                }
+
+                                Button(action: {
+                                    GameCenterManager.shared.showAchievements()
+                                }) {
+                                    HStack {
+                                        Image(systemName: "star.fill")
+                                        Text("업적")
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(.yellow.opacity(0.8))
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 38)
+                                    .background(Color.yellow.opacity(0.1))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                }
+                            }
+                        }
                     }
                     .padding(.horizontal, 24)
                     .opacity(animateButtons ? 1.0 : 0)
