@@ -62,8 +62,12 @@ struct GameContainerView: View {
             }
         }
         .onAppear {
+            UserSettings.shared.applyToManagers()
             setupAI()
             startNewGame()
+        }
+        .onDisappear {
+            BGMGenerator.shared.stopBGM()
         }
         .statusBarHidden(true)
     }
@@ -163,12 +167,13 @@ struct GameContainerView: View {
         case .intermediate:
             engine.aiPlayer = IntermediateAI()
         case .expert:
-            engine.aiPlayer = IntermediateAI() // TODO: ExpertAI
+            engine.aiPlayer = ExpertAI()
         }
     }
 
     private func startNewGame() {
         engine.startNewGame()
+        BGMGenerator.shared.playGameBGM(volume: 0.1)
     }
 
     private func handlePhaseChange(_ phase: GamePhase) {
@@ -184,6 +189,13 @@ struct GameContainerView: View {
                 engine.executeAIGoStopDecision()
             }
         case .roundEnd, .gameOver:
+            BGMGenerator.shared.stopBGM()
+            // 승패 사운드
+            if engine.state.winner == .human {
+                SoundManager.shared.play(.winCheer)
+            } else {
+                SoundManager.shared.play(.loseSigh)
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 showResultView = true
             }
@@ -332,8 +344,11 @@ struct GameResultView: View {
 
     @State private var appear = false
     @State private var showScore = false
+    @State private var showDetails = false
+    @State private var recorded = false
 
     var isWin: Bool { state.winner == .human }
+    var winnerPlayer: Player { isWin ? state.humanPlayer : state.aiPlayer }
 
     var body: some View {
         ZStack {
@@ -361,6 +376,7 @@ struct GameResultView: View {
                         Text("\(state.finalScore)점")
                             .font(.system(size: 40, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
+                            .contentTransition(.numericText())
 
                         // 배수 상세
                         if !state.scoreMultipliers.isEmpty {
@@ -375,6 +391,25 @@ struct GameResultView: View {
                         }
                     }
                     .transition(.scale.combined(with: .opacity))
+                }
+
+                // 획득 카드 상세
+                if showDetails {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 16) {
+                            ResultDetailItem(icon: "🌟", label: "광", value: "\(winnerPlayer.capturedBrights.count)")
+                            ResultDetailItem(icon: "🦌", label: "열끗", value: "\(winnerPlayer.capturedAnimals.count)")
+                            ResultDetailItem(icon: "🎀", label: "띠", value: "\(winnerPlayer.capturedRibbons.count)")
+                            ResultDetailItem(icon: "🍃", label: "피", value: "\(winnerPlayer.totalJunkCount)")
+                        }
+
+                        if winnerPlayer.goCount > 0 {
+                            Text("\(winnerPlayer.goCount)고 달성!")
+                                .font(.caption.bold())
+                                .foregroundColor(.orange)
+                        }
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
 
                 // 점수 비교
@@ -439,12 +474,72 @@ struct GameResultView: View {
             .opacity(appear ? 1 : 0)
         }
         .onAppear {
+            // 통계 기록
+            if !recorded {
+                recorded = true
+                recordGameResult()
+            }
+
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 appear = true
             }
             withAnimation(.easeOut(duration: 0.5).delay(0.5)) {
                 showScore = true
             }
+            withAnimation(.easeOut(duration: 0.4).delay(0.9)) {
+                showDetails = true
+            }
+        }
+    }
+
+    private func recordGameResult() {
+        let won = state.winner == .human
+        let player = state.humanPlayer
+
+        // UserSettings 통계 업데이트
+        UserSettings.shared.recordGame(
+            won: won,
+            score: state.finalScore,
+            goCount: player.goCount,
+            hadGodori: player.hasGodori,
+            brightCount: player.capturedBrights.count
+        )
+
+        // 상세 기록 저장
+        let record = GameRecord(
+            won: won,
+            score: state.finalScore,
+            goCount: player.goCount,
+            multipliers: state.scoreMultipliers,
+            aiDifficulty: AIDifficulty(rawValue: UserSettings.shared.aiDifficulty) ?? .intermediate,
+            brightCount: player.capturedBrights.count,
+            animalCount: player.capturedAnimals.count,
+            ribbonCount: player.capturedRibbons.count,
+            junkCount: player.totalJunkCount,
+            hadGodori: player.hasGodori,
+            roundsPlayed: state.roundNumber
+        )
+        GameRecordStore.shared.addRecord(record)
+    }
+}
+
+// MARK: - 결과 상세 아이템
+
+struct ResultDetailItem: View {
+    let icon: String
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(icon)
+                .font(.system(size: 16))
+            Text(value)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+            Text(label)
+                .font(.system(size: 9))
+                .foregroundColor(.white.opacity(0.4))
         }
     }
 }

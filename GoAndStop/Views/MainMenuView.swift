@@ -4,6 +4,7 @@ struct MainMenuView: View {
     @State private var showGame = false
     @State private var showSettings = false
     @State private var showRules = false
+    @State private var showStats = false
     @State private var selectedDifficulty: AIDifficulty = .intermediate
     @State private var animateTitle = false
     @State private var animateCards = false
@@ -113,7 +114,20 @@ struct MainMenuView: View {
                             .shadow(color: Color(red: 1, green: 0.84, blue: 0).opacity(0.4), radius: 8, y: 4)
                         }
 
-                        HStack(spacing: 14) {
+                        HStack(spacing: 10) {
+                            // 전적
+                            Button(action: { showStats = true }) {
+                                HStack {
+                                    Image(systemName: "chart.bar.fill")
+                                    Text("전적")
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 48)
+                                .background(Color.white.opacity(0.15))
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                            }
+
                             // 규칙 설명
                             Button(action: { showRules = true }) {
                                 HStack {
@@ -158,7 +172,13 @@ struct MainMenuView: View {
             .sheet(isPresented: $showRules) {
                 RuleBookView()
             }
+            .sheet(isPresented: $showStats) {
+                StatsView()
+            }
             .onAppear {
+                BGMGenerator.shared.playLobbyBGM(volume: 0.15)
+                UserSettings.shared.applyToManagers()
+
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1)) {
                     animateTitle = true
                 }
@@ -168,6 +188,9 @@ struct MainMenuView: View {
                 withAnimation(.easeOut(duration: 0.5).delay(0.6)) {
                     animateButtons = true
                 }
+            }
+            .onDisappear {
+                BGMGenerator.shared.stopBGM()
             }
         }
     }

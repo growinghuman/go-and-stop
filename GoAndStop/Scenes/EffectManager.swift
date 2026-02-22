@@ -291,4 +291,61 @@ class EffectManager {
 
         scene.run(SKAction.sequence(actions))
     }
+
+    // MARK: - 나가리 이펙트
+
+    func showNagariEffect(at position: CGPoint) {
+        guard let scene = scene else { return }
+
+        // 어두운 오버레이
+        let overlay = SKShapeNode(rectOf: scene.size)
+        overlay.fillColor = UIColor.black.withAlphaComponent(0.3)
+        overlay.strokeColor = .clear
+        overlay.position = CGPoint(x: scene.size.width / 2, y: scene.size.height / 2)
+        overlay.zPosition = 89
+        overlay.alpha = 0
+        scene.addChild(overlay)
+
+        let fadeIn = SKAction.fadeAlpha(to: 1, duration: 0.3)
+        let wait = SKAction.wait(forDuration: 1.0)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.3)
+        overlay.run(SKAction.sequence([fadeIn, wait, fadeOut, SKAction.removeFromParent()]))
+
+        showBigText("나가리!", color: .white, at: position, fontSize: 36)
+    }
+
+    // MARK: - 흔듦 이펙트
+
+    func showShakeEffect(at position: CGPoint) {
+        shakeScreen(intensity: 6, duration: 0.3)
+        showBigText("흔듦!", color: .systemPurple, at: position, fontSize: 30)
+    }
+
+    // MARK: - 점수 달성 이펙트
+
+    func showScoreReached(score: Int, at position: CGPoint) {
+        guard let scene = scene else { return }
+
+        let label = SKLabelNode(text: "\(score)점 달성!")
+        label.fontName = "HelveticaNeue-Bold"
+        label.fontSize = 22
+        label.fontColor = .systemYellow
+        label.position = position
+        label.zPosition = 105
+        label.alpha = 0
+        scene.addChild(label)
+
+        let appear = SKAction.group([
+            SKAction.fadeIn(withDuration: 0.2),
+            SKAction.scale(to: 1.2, duration: 0.2)
+        ])
+        let settle = SKAction.scale(to: 1.0, duration: 0.1)
+        let wait = SKAction.wait(forDuration: 0.6)
+        let fly = SKAction.group([
+            SKAction.fadeOut(withDuration: 0.4),
+            SKAction.moveBy(x: 0, y: 40, duration: 0.4)
+        ])
+
+        label.run(SKAction.sequence([appear, settle, wait, fly, SKAction.removeFromParent()]))
+    }
 }

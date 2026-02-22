@@ -100,9 +100,25 @@ class GameScene: SKScene {
         engine.$state
             .receive(on: RunLoop.main)
             .sink { [weak self] state in
+                self?.handleStateChange(state)
                 self?.onPhaseChange?(state.phase)
             }
             .store(in: &cancellables)
+    }
+
+    private func handleStateChange(_ state: GameState) {
+        // 이벤트 기반 연출 자동 재생
+        if state.lastEvent != .none && state.lastEvent != .noMatch {
+            playEvent(state.lastEvent)
+        }
+
+        // 매칭 가능 카드 하이라이트
+        if state.phase == .playerTurnSelectMatch && !state.matchableTableCards.isEmpty {
+            highlightMatchableCards(state.matchableTableCards)
+        }
+
+        // 레이아웃 갱신
+        refreshLayout()
     }
 
     // MARK: - 게임 시작 연출
@@ -410,9 +426,38 @@ class GameScene: SKScene {
             effectManager.showStopEffect(at: CGPoint(x: size.width / 2, y: size.height / 2))
             onSoundEvent?(.stopCall)
 
+        case .shake:
+            effectManager.showShakeEffect(at: tableCenter)
+            onSoundEvent?(.shake)
+
+        case .ribbonSetComplete(let ribbonType):
+            let text: String
+            switch ribbonType {
+            case .redPoetry: text = "홍단!"
+            case .bluePlain: text = "청단!"
+            case .redPlain:  text = "초단!"
+            case .none: return
+            }
+            effectManager.showBigText(text, color: .systemOrange, at: CGPoint(x: size.width / 2, y: size.height / 2), fontSize: 36)
+            onSoundEvent?(.cardMatch)
+
         default:
             break
         }
+    }
+
+    // MARK: - 승리/패배 연출
+
+    func playWinEffect() {
+        let center = CGPoint(x: size.width / 2, y: size.height / 2)
+        effectManager.showWinEffect(at: center)
+        onSoundEvent?(.winCheer)
+    }
+
+    func playLoseEffect() {
+        let center = CGPoint(x: size.width / 2, y: size.height / 2)
+        effectManager.showLoseEffect(at: center)
+        onSoundEvent?(.loseSigh)
     }
 
     // MARK: - 레이아웃 갱신
