@@ -14,6 +14,13 @@ class MatchGoEngine: ObservableObject {
         self.rules = rules
         self.state = GameState()
         self.scoreCalculator = ScoreCalculator(rules: rules)
+
+        // GameState 내부 @Published 변경을 엔진 레벨로 전파
+        state.objectWillChange
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - 게임 시작

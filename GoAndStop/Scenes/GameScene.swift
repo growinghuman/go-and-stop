@@ -96,29 +96,70 @@ class GameScene: SKScene {
 
     // MARK: - Observers
 
+    private var lastObservedPhase: GamePhase = .notStarted
+
     private func setupObservers() {
-        engine.$state
+        // phase 변경 관찰 (가장 중요: AI 턴 트리거, 고/스톱 등)
+        engine.state.$phase
+            .removeDuplicates()
             .receive(on: RunLoop.main)
-            .sink { [weak self] state in
-                self?.handleStateChange(state)
-                self?.onPhaseChange?(state.phase)
+            .sink { [weak self] phase in
+                guard let self = self else { return }
+                self.lastObservedPhase = phase
+                self.handleStateChange(self.engine.state)
+                self.onPhaseChange?(phase)
+            }
+            .store(in: &cancellables)
+
+        // 바닥 카드 변경 관찰 (레이아웃 갱신)
+        engine.state.$tableCards
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.refreshLayout()
+            }
+            .store(in: &cancellables)
+
+        // 이벤트 관찰 (연출 효과)
+        engine.state.$lastEvent
+            .receive(on: RunLoop.main)
+            .sink { [weak self] event in
+                guard let self = self else { return }
+                if event != .none && event != .noMatch {
+                    self.playEvent(event)
+                }
+            }
+            .store(in: &cancellables)
+
+        // 매칭 가능 카드 하이라이트
+        engine.state.$matchableTableCards
+            .receive(on: RunLoop.main)
+            .sink { [weak self] cards in
+                guard let self = self else { return }
+                if self.engine.state.phase == .playerTurnSelectMatch && !cards.isEmpty {
+                    self.highlightMatchableCards(cards)
+                }
             }
             .store(in: &cancellables)
     }
 
     private func handleStateChange(_ state: GameState) {
-        // 이벤트 기반 연출 자동 재생
-        if state.lastEvent != .none && state.lastEvent != .noMatch {
-            playEvent(state.lastEvent)
-        }
-
-        // 매칭 가능 카드 하이라이트
-        if state.phase == .playerTurnSelectMatch && !state.matchableTableCards.isEmpty {
-            highlightMatchableCards(state.matchableTableCards)
-        }
-
+        // 덱에서 뒤집힌 카드 등 누락된 노드 생성
+        ensureCardNodes(for: state)
         // 레이아웃 갱신
         refreshLayout()
+    }
+
+    /// 상태에 존재하지만 노드가 없는 카드의 노드를 생성
+    private func ensureCardNodes(for state: GameState) {
+        // 바닥 카드
+        for card in state.tableCards {
+            if cardNodes[card.id] == nil {
+                let node = createCardNode(card: card, faceUp: true)
+                node.position = deckPosition
+                node.zPosition = 50
+                addChild(node)
+            }
+        }
     }
 
     // MARK: - 게임 시작 연출
@@ -296,10 +337,16 @@ class GameScene: SKScene {
                 selectedCardNode = cardNode
 
                 onSoundEvent?(.cardPlay)
-                engine.playerSelectCard(cardNode.card)
 
-                // 선택된 카드 애니메이션
-                animateCardPlay(cardNode: cardNode)
+                // 먼저 애니메이션 시작, 완료 후 엔진 처리
+                isAnimating = true
+                let card = cardNode.card
+                let dest = tableCenter
+                cardNode.moveTo(dest, duration: 0.2) { [weak self] in
+                    guard let self = self else { return }
+                    self.isAnimating = false
+                    self.engine.playerSelectCard(card)
+                }
                 return
             }
         }
@@ -316,9 +363,16 @@ class GameScene: SKScene {
                 // 하이라이트 제거
                 for mc in matchable {
                     cardNodes[mc.id]?.setSelectable(false)
+                    cardNodes[mc.id]?.isHighlighted = false
                 }
 
-                engine.playerSelectTableMatch(cardNode.card)
+                let card = cardNode.card
+                isAnimating = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+                    guard let self = self else { return }
+                    self.isAnimating = false
+                    self.engine.playerSelectTableMatch(card)
+                }
                 return
             }
         }

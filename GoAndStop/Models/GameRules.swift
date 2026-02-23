@@ -30,10 +30,10 @@ struct GameRules: Codable {
     var godoriScore: Int = 5
 
     /// 광박 적용 방식 (true: 배수, false: +1점)
-    var brightPenaltyIsMultiplier: Bool = false
+    var brightPenaltyIsMultiplier: Bool = true
 
     /// 피박 라인 (이 수 이하면 피박)
-    var junkPenaltyThreshold: Int = 7
+    var junkPenaltyThreshold: Int = 5
 
     /// 멍박 (열끗 0장) 적용 여부
     var enableAnimalPenalty: Bool = true
