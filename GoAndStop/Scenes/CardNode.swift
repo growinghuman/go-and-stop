@@ -257,10 +257,10 @@ class CardNode: SKSpriteNode {
             glow.name = "glow"
             glow.shouldRasterize = true
             // 노란색 테두리로 하이라이트
-            let border = SKShapeNode(rectOf: CGSize(width: CardNode.cardWidth + 4, height: CardNode.cardHeight + 4), cornerRadius: cornerRadius)
-            border.strokeColor = .systemYellow
+            let border = SKShapeNode(rectOf: CGSize(width: CardNode.cardWidth + 4, height: CardNode.cardHeight + 4), cornerRadius: CardNode.cornerRadius)
+            border.strokeColor = UIColor.systemYellow
             border.lineWidth = 3
-            border.fillColor = .clear
+            border.fillColor = UIColor.clear
             border.glowWidth = 3
             border.name = "highlight_border"
             addChild(border)
