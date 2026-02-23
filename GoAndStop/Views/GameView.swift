@@ -134,7 +134,7 @@ struct GameContainerView: View {
                 if currentPhase == .playerTurnSelectCard {
                     Text("패를 선택하세요")
                         .font(.caption)
-                        .foregroundColor(.systemYellow)
+                        .foregroundColor(.yellow)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
                         .background(Color.yellow.opacity(0.15))
@@ -376,7 +376,7 @@ struct GameResultView: View {
                         Text("\(state.finalScore)점")
                             .font(.system(size: 40, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
-                            .contentTransition(.numericText())
+                            .animation(.default, value: state.finalScore)
 
                         // 배수 상세
                         if !state.scoreMultipliers.isEmpty {

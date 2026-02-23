@@ -404,11 +404,11 @@ class GameScene: SKScene {
             effectManager.showSsulEffect()
             onSoundEvent?(.ssul)
 
-        case .bomb:
+        case .bomb(_):
             effectManager.showBombEffect(at: tableCenter)
             onSoundEvent?(.bomb)
 
-        case .brightCaptured:
+        case .brightCaptured(_):
             effectManager.showBrightEffect(at: tableCenter)
             onSoundEvent?(.gwangHit)
 
@@ -426,7 +426,7 @@ class GameScene: SKScene {
             effectManager.showStopEffect(at: CGPoint(x: size.width / 2, y: size.height / 2))
             onSoundEvent?(.stopCall)
 
-        case .shake:
+        case .shake(_):
             effectManager.showShakeEffect(at: tableCenter)
             onSoundEvent?(.shake)
 
