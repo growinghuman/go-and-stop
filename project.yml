@@ -1,0 +1,49 @@
+name: GoAndStop
+options:
+  bundleIdPrefix: com.goandstop
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "15.0"
+  createIntermediateGroups: true
+  defaultConfig: Release
+
+targets:
+  GoAndStop:
+    type: application
+    platform: iOS
+    sources:
+      - path: GoAndStop
+        excludes:
+          - "Resources/Particles/**"
+          - "Views/Components/**"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.goandstop.matchgo
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: 1
+        INFOPLIST_FILE: GoAndStop/Info.plist
+        PRODUCT_NAME: GoAndStop
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+        SUPPORTS_MACCATALYST: false
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        SWIFT_EMIT_LOC_STRINGS: true
+        GENERATE_INFOPLIST_FILE: false
+        ENABLE_PREVIEWS: true
+      configs:
+        Debug:
+          CODE_SIGN_IDENTITY: "Apple Development"
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+          DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
+        Release:
+          CODE_SIGN_IDENTITY: "Apple Development"
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
+    entitlements:
+      path: GoAndStop/GoAndStop.entitlements
+      properties:
+        com.apple.developer.game-center: true
+    info:
+      path: GoAndStop/Info.plist
